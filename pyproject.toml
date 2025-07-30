@@ -1,0 +1,10 @@
+[project]
+name = "selfops-cli"
+version = "0.2.0"
+
+[tool.setuptools]
+packages = ["core", "commands"]
+py-modules = ["main"]
+
+[project.scripts]
+selfops = "main:app"

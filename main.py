@@ -1,5 +1,5 @@
 import typer
-from .commands import auth, control, monitor
+from commands import auth, control, monitor
 
 app = typer.Typer()
 
@@ -16,7 +16,7 @@ app.command(name="restart")(control.restart)
 app.command(name="update-image")(control.update_image)
 
 
-#monitor routes
+# monitor routes
 app.command(name="init")(monitor.init)
 app.command(name="monitor")(monitor.monitor)
 app.command(name="status")(monitor.status)
