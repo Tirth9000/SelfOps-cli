@@ -6,18 +6,6 @@ client = docker.from_env()
 def get_cpu_percent(cpu_stats, precpu_stats):
     try:
         cpu_delta = cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
-        system_delta = cpu_stats["system_cpu_usage"] - precpu_stats["system_cpu_usage"]
-        cpu_count = cpu_stats.get("online_cpus", 1)
-        if system_delta > 0.0 and cpu_delta > 0.0:
-            return round((cpu_delta / system_delta) * cpu_count * 100.0, 2)
-    except Exception:
-        return 0.0
-    return 0.0
-
-    
-def get_cpu_percent(cpu_stats, precpu_stats):
-    try:
-        cpu_delta = cpu_stats["cpu_usage"]["total_usage"] - precpu_stats["cpu_usage"]["total_usage"]
         system_delta = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get("system_cpu_usage", 0)
         cpu_count = cpu_stats.get("online_cpus", 1)
         if system_delta > 0.0 and cpu_delta > 0.0:
@@ -25,6 +13,7 @@ def get_cpu_percent(cpu_stats, precpu_stats):
     except Exception:
         return 0.0
     return 0.0
+
 
 def get_table():
     table = Table(title="🚀 Docker Containers Live Monitor", expand=True)
@@ -45,8 +34,8 @@ def get_table():
 
             status = container.status
             health = container.attrs["State"].get("Health", {}).get("Status", "N/A")
-
-            table.add_row(container.name, f"{cpu}%", mem_display, status, health)
+            icon = "🟢" if status == "running" else "🔴"
+            table.add_row(f"{icon} {container.name}", f"{cpu}%", mem_display, status, health)
         except Exception as e:
             table.add_row(container.name, "-", "-", "ERROR", str(e))
     return table
