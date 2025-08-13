@@ -1,5 +1,5 @@
 import typer
-from commands import auth, control, monitor
+from commands import auth, control, monitor, operations
 
 app = typer.Typer()
 
