@@ -11,7 +11,7 @@ client = docker.from_env()
 
 
 def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to initialize the monitor commands.")):
-    print("Initializing monitor commands...")
+    console.print("[blue]Initializing monitor commands...[/blue]")
     if yml_path:
         yaml_file_path = yml_path
     yaml_file_path = "docker-compose.yml"
@@ -19,7 +19,7 @@ def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to ini
     try: 
         with open(yaml_file_path, "r") as file:
             yaml_data = yaml.safe_load(file)
-
+            
         json_data = json.dumps(yaml_data, indent=4)
         print(json_data)
     
@@ -27,11 +27,14 @@ def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to ini
         typer.echo(f"Error: The file '{yaml_file_path}' does not exist.", err=True)
 
 
-
 def monitor():
     containers = client.containers.list(all=True)
+    if len(containers) == 0:
+        console.print("[bold red]No containers found to monitor.[/bold red]")
+        return
 
-    with Live(console=console, refresh_per_second=3) as live:
+    console.print("[blue]Starting live monitoring of Docker containers... [/blue]")
+    with Live(console=console, refresh_per_second=2) as live:
         table = Table(title="🚀 Docker Containers Live Monitor", expand=True)
         table.add_column("Container", style="bold cyan", justify="left")
         table.add_column("CPU %", style="bold yellow", justify="right")
@@ -57,8 +60,7 @@ def monitor():
 
         while True:
             live.update(get_table())
-            time.sleep(3)
-
+            time.sleep(1)
 
 
 def status():
@@ -74,13 +76,15 @@ def status():
             status_color = "green" if status == "running" else "red"
             table.add_row(f"{icon} {container.name}", f"[{status_color}] {status} [/{status_color}]")
         except Exception as e:
-            print(f"Error fetching status for {container.name}: {e}")
+            console.print(f"[red]Error fetching status for {container.name}: {e}[/red]")
     console.print(table)
-    typer.echo("Status check complete.")
+    console.print("[green]Status check completed.[/green]")
+
 
 
 def health_check():
     print("Performing health check...")
+
 
 def logs():
     print("Fetching logs...")
