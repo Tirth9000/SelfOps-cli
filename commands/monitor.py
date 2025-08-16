@@ -1,4 +1,5 @@
 import typer, docker
+from docker.errors import DockerException
 from rich.live import Live
 from rich.table import Table
 from rich.console import Console
@@ -7,7 +8,12 @@ import yaml, json, time
 
 
 console = Console()
-client = docker.from_env()
+try:
+    client = docker.from_env()
+except DockerException as e:
+    console.print("[bold red]❌ Docker daemon is not running. Please start Docker and try again.[/bold red]")
+    console.print(f"Error details: {e}")
+    exit(1)
 
 
 def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to initialize the monitor commands.")):
@@ -39,7 +45,7 @@ def monitor():
         table.add_column("Container", style="bold cyan", justify="left")
         table.add_column("CPU %", style="bold yellow", justify="right")
         table.add_column("Memory", style="magenta", justify="center")
-        table.add_column("Status", style="green", justify="center")
+        table.add_column("Status", justify="center")
         table.add_column("Health", style="bold red", justify="center")
         for container in containers:
             try:
@@ -52,7 +58,8 @@ def monitor():
                 status = container.status
                 health = container.attrs["State"].get("Health", {}).get("Status", "N/A")
                 icon = "🟢" if status == "running" else "🔴"
-                table.add_row(f"{icon} {container.name}", f"{cpu}%", mem_display, status, health)
+                color = "green" if status == "running" else "red"
+                table.add_row(f"{icon} {container.name}", f"{cpu}%", mem_display, f"[{color}] {status} [/{color}]", health)
 
             except Exception as e:
                 table.add_row(container.name, "-", "-", "ERROR", str(e))
@@ -64,21 +71,25 @@ def monitor():
 
 
 def status():
-    containers = client.containers.list(all=True)
+    try:
+        containers = client.containers.list(all=True)
 
-    table = Table(title="Containers Status", expand=False)
-    table.add_column("Container", style="bold cyan", justify="left")
-    table.add_column("Status", justify="center")
-    for container in containers:
-        try:
-            status = container.status
-            icon = "🟢" if status == "running" else "🔴"
-            status_color = "green" if status == "running" else "red"
-            table.add_row(f"{icon} {container.name}", f"[{status_color}] {status} [/{status_color}]")
-        except Exception as e:
-            console.print(f"[red]Error fetching status for {container.name}: {e}[/red]")
-    console.print(table)
-    console.print("[green]Status check completed.[/green]")
+        table = Table(title="Containers Status", expand=False)
+        table.add_column("Container", style="bold cyan", justify="left")
+        table.add_column("Status", justify="center")
+        for container in containers:
+            try:
+                container = client.containers.get(container.id)
+                status = container.status
+                icon = "🟢" if status == "running" else "🔴"
+                status_color = "green" if status == "running" else "red"
+                table.add_row(f"{icon} {container.name}", f"[{status_color}] {status} [/{status_color}]")
+            except Exception as e:
+                console.print(f"[red]Error fetching status for {container.name}: {e}[/red]")
+        console.print(table)
+        console.print("[green]Status check completed.[/green]")
+    except docker.errors.APIError as e:
+        console.print(f"[bold red]Docker API error: {e}[/bold red]")
 
 
 
@@ -86,5 +97,35 @@ def health_check():
     print("Performing health check...")
 
 
-def logs():
-    print("Fetching logs...")
+def logs(container_name_or_id: str = typer.Argument(None, help="Container name or ID to fetch logs."),
+         live_log: bool = typer.Option(False, "--live", "-l", help="Fetch live logs.")):
+    try:
+        if not container_name_or_id:
+            console.print("[bold red]Container name or ID is required to fetch logs.[/bold red]")
+            return
+        
+        elif container_name_or_id:
+            container = client.containers.get(container_name_or_id)
+            if not container:
+                console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]")
+                return
+
+            if live_log:
+                for log in container.logs(stream=True, follow=True):
+                    log_line = log.decode('utf-8').strip()
+                    console.print(log_line)
+                console.print("[bold green]Live logs streaming stopped.[/bold green]")
+
+            else:
+                logs = container.logs(stream=False)
+                console.print(f"[bold cyan]Logs for {container_name_or_id}:[/bold cyan]")
+                console.print(logs.decode('utf-8'))
+        else:
+            console.print("[bold red]Please provide a container name or ID to fetch logs.[/bold red]")
+
+    except docker.errors.NotFound:
+        console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]")
+    except docker.errors.APIError as e:
+        console.print(f"[bold red]Docker API error: {e}[/bold red]")
+    except Exception as e:
+        console.print(f"[bold red]An error occurred while fetching logs: {e}[/bold red]")

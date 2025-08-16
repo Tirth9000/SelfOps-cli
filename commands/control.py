@@ -1,11 +1,17 @@
 import typer, docker
+from docker.errors import DockerException
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
 import time
 
-client = docker.from_env()
 console = Console()
+try:
+    client = docker.from_env()
+except DockerException as e:
+    console.print("[bold red]❌ Docker daemon is not running. Please start Docker and try again.[/bold red]")
+    console.print(f"Error details: {e}")
+    exit(1)
 
 
 def start(container_name_or_id: str = typer.Argument(None, help="Container name or ID to start."),
