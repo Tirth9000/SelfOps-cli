@@ -1,7 +1,16 @@
 from rich.table import Table
 import docker
+from rich.console import Console
+from docker.errors import DockerException
 
-client = docker.from_env()
+console = Console()
+
+try:
+    client = docker.from_env()
+except DockerException as e:
+    console.print("[bold red]❌ Docker daemon is not running. Please start Docker and try again.[/bold red]")
+    console.print(f"Error details: {e}")
+    exit(1)
 
 def get_cpu_percent(cpu_stats, precpu_stats):
     try:
@@ -35,7 +44,8 @@ def get_table():
             status = container.status
             health = container.attrs["State"].get("Health", {}).get("Status", "N/A")
             icon = "🟢" if status == "running" else "🔴"
-            table.add_row(f"{icon} {container.name}", f"{cpu}%", mem_display, status, health)
+            color = "green" if status == "running" else "red"
+            table.add_row(f"{icon} {container.name}", f"{cpu}%", mem_display, f"[{color}] {status} [/{color}]", health)
         except Exception as e:
             table.add_row(container.name, "-", "-", "ERROR", str(e))
     return table
