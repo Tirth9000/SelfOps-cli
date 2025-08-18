@@ -14,7 +14,7 @@ except DockerException as e:
     exit(1)
 
 
-def start(container_name_or_id: str = typer.Argument(None, help="Container name or ID to start."),
+def start(container_names_or_ids: list[str] = typer.Argument(None, help="Container name or ID to start."),
           all_containers: bool = typer.Option(False, "--all", "-a", help="start all containers.")):
     try:
         if all_containers:
@@ -42,42 +42,43 @@ def start(container_name_or_id: str = typer.Argument(None, help="Container name 
             console.print("[bold green]All containers have been started.[/bold green]")
             return 
 
-        elif container_name_or_id:
-            container = client.containers.get(container_name_or_id)
-            if not container:
-                console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]")
-                return
-            
-            print("Starting the service...")
-            if container:
-                if container.status == "exited":
-                    container.start()
-                    typer.echo(f"Container {container_name_or_id} started.")
-                else:
-                    typer.echo(f"Container {container_name_or_id} is already running.")
-                    
-                container = client.containers.get(container_name_or_id)
-                
+        elif container_names_or_ids:
+            with Live(console=console, refresh_per_second=2) as live:
+                console.print("[blue]Starting containers ... [/blue]")
+
                 table = Table(title="Container Status", expand=False)
-                time.sleep(1)
                 table.add_column("Container", style="bold cyan", justify="left")
                 table.add_column("Status", justify="center")
-                current_status = container.status
-                icon = "🟢" if current_status == "running" else "🔴"
-                color = "green" if current_status == "running" else "red"
-                table.add_row(f"{icon} " + container.name, f"[{color}]{current_status}[/{color}]")
-                console.print(table)
-            else:
-                typer.echo(f"Container {container_name_or_id} not found.", err=True)
+
+                for container_name in container_names_or_ids:
+                    container = client.containers.get(container_name)
+                    if not container:
+                        console.print(f"[bold red]Container '{container_name}' not found.[/bold red]")
+                
+                    else:
+                        if container.status == "exited":
+                            container.start()
+                            console.print(f"[/green]Container [cyan]'{container_name}'[/cyan] started.[/green]")
+                        else:
+                            console.print(f"[green]Container [cyan]'{container_name}'[/cyan] is already running.[/green]")
+                        
+                        container = client.containers.get(container_name)
+                        
+                        current_status = container.status
+                        icon = "🟢" if current_status == "running" else "🔴"
+                        color = "green" if current_status == "running" else "red"
+                        table.add_row(f"{icon} " + container.name, f"[{color}]{current_status}[/{color}]")
+                live.update(table)
         else:
             console.print("[bold red]Please provide a container name or ID to start.[/bold red]")
                 
     except docker.errors.NotFound:
-        console.print(f"[bold red]Container '{container_name_or_id}' not found. [/bold red]")
+        console.print(f"[bold red]Container '{container_names_or_ids}' not found. [/bold red]")
 
 
 
-def stop(container_name_or_id: str = typer.Argument(None, help="Container name or ID to stop."),
+# multiple container input remaining
+def stop(container_name_or_id: list[str] = typer.Argument(None, help="Container name or ID to stop."),
          all_containers: bool = typer.Option(False, "--all", "-a", help="stop all the containers.")):
     try: 
         if all_containers:
@@ -129,7 +130,7 @@ def stop(container_name_or_id: str = typer.Argument(None, help="Container name o
         console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]" )
 
 
-
+# multiple input remaining
 def restart(container_name_or_id: str = typer.Argument(None, help="Container name or ID to restart."),
             all_containers: bool = typer.Option(False, "--all", "-a", help="Restart all the containers.")):
     try:
