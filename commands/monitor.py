@@ -71,6 +71,7 @@ def monitor():
 
 
 def status():
+    console.print("[blue]Checking status of all containers...[/blue]")
     try:
         containers = client.containers.list(all=True)
 

@@ -52,33 +52,30 @@ def start(container_names_or_ids: list[str] = typer.Argument(None, help="Contain
 
                 for container_name in container_names_or_ids:
                     container = client.containers.get(container_name)
-                    if not container:
-                        console.print(f"[bold red]Container '{container_name}' not found.[/bold red]")
-                
+                    if container.status == "exited":
+                        container.start()
+                        console.print(f"[green]Container [cyan]'{container_name}'[/cyan] started.[/green]")
                     else:
-                        if container.status == "exited":
-                            container.start()
-                            console.print(f"[/green]Container [cyan]'{container_name}'[/cyan] started.[/green]")
-                        else:
-                            console.print(f"[green]Container [cyan]'{container_name}'[/cyan] is already running.[/green]")
-                        
-                        container = client.containers.get(container_name)
-                        
-                        current_status = container.status
-                        icon = "🟢" if current_status == "running" else "🔴"
-                        color = "green" if current_status == "running" else "red"
-                        table.add_row(f"{icon} " + container.name, f"[{color}]{current_status}[/{color}]")
-                live.update(table)
+                        console.print(f"[green]Container [cyan]'{container_name}'[/cyan] is already running.[/green]")
+                        continue
+                    
+                    container = client.containers.get(container_name)
+                    
+                    current_status = container.status
+                    icon = "🟢" if current_status == "running" else "🔴"
+                    color = "green" if current_status == "running" else "red"
+                    table.add_row(f"{icon} " + container.name, f"[{color}]{current_status}[/{color}]")
+                    live.update(table)
         else:
             console.print("[bold red]Please provide a container name or ID to start.[/bold red]")
                 
-    except docker.errors.NotFound:
-        console.print(f"[bold red]Container '{container_names_or_ids}' not found. [/bold red]")
+    except docker.errors.NotFound as e:
+        console.print(f"[bold red]Error: [/bold red] [red]{e}[/red]")
 
 
 
 # multiple container input remaining
-def stop(container_name_or_id: list[str] = typer.Argument(None, help="Container name or ID to stop."),
+def stop(containers_name_or_id: list[str] = typer.Argument(None, help="Container name or ID to stop."),
          all_containers: bool = typer.Option(False, "--all", "-a", help="stop all the containers.")):
     try: 
         if all_containers:
@@ -100,34 +97,32 @@ def stop(container_name_or_id: list[str] = typer.Argument(None, help="Container 
             console.print("[bold green]All running containers have been stopped.[/bold green]")
             return
 
-        elif container_name_or_id:
-            container = client.containers.get(container_name_or_id)
-            if not container:
-                console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]")
-                return
+        elif containers_name_or_id:
+            with Live(console=console, refresh_per_second=3) as live:
+                console.print("[blue]Stopping container(s)...[/blue]")
 
-            print("Stopping the container...")
-            if container.status == "running":
-                container.stop()
-                with Live(console=console, refresh_per_second=3) as live:
-                    while container.status != "exited":
-                        container = client.containers.get(container_name_or_id)
+                table = Table(title="Container Status", expand=False)
+                table.add_column("Container", style="bold cyan", justify="left")
+                table.add_column("Status", style="red", justify="center")
 
-                        table = Table(title="Container Status", expand=False)
-                        table.add_column("Container", style="bold cyan", justify="left")
-                        table.add_column("Status", style="red", justify="center")
-                        color = 'red' if container.status == "exited" else 'green'
-                        icon = "🔴" if container.status == "exited" else "🟢"
-                        table.add_row(f"{icon} {container.name}", f"[{color}]{container.status}[/{color}]")
-                        live.update(table)
-                typer.echo(f"Container {container_name_or_id} stopped.")
-            else:
-                typer.echo(f"Container {container_name_or_id} is not running.")
+                for container_name in containers_name_or_id:
+                    container = client.containers.get(container_name)
+                    if container.status == "running":
+                        container.stop()
+                        while container.status != "exited":
+                            container = client.containers.get(container_name)
+
+                            color = 'red' if container.status == "exited" else 'green'
+                            icon = "🔴" if container.status == "exited" else "🟢"
+                            table.add_row(f"{icon} {container.name}", f"[{color}]{container.status}[/{color}]")
+                            live.update(table)
+                    else:
+                        console.print(f"[red]Container [cyan]'{container_name}'[/cyan] is already exited.[/red]")
         else:
             console.print("[bold red]Please provide a container name or ID to stop.[/bold red]")
 
-    except docker.errors.NotFound:
-        console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]" )
+    except docker.errors.NotFound as e:
+        console.print(f"[red]{e}[/red]" )
 
 
 # multiple input remaining

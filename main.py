@@ -1,4 +1,4 @@
-import typer
+import typer, time
 from commands import auth, control, monitor, operations
 
 app = typer.Typer()
@@ -25,6 +25,19 @@ app.command(name="logs")(monitor.logs)
 
 
 
+logo = """
+   _____ ________    __________  ____  _____      
+  / ___// ____/ /   / ____/ __ \/ __ \/ ___/      
+  \__ \/ __/ / /   / /_  / / / / /_/ /\__ \       
+ ___/ / /___/ /___/ __/ / /_/ / ____/___/ /       
+/____/_____/_____/_/    \____/_/    /____/   
+         🚀 SelfOps CLI
+"""
+def print_logo():
+    for line in logo.splitlines():
+        print(line)
+        time.sleep(0.05) 
 
 if __name__ == "__main__":
+    print_logo()
     app()
