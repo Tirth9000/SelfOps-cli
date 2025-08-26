@@ -8,8 +8,7 @@ auth_app = typer.Typer()
 def login():
     username = typer.prompt("Enter your username ")
     password = typer.prompt("Enter your password ", hide_input=True)
-    print("Logging you in...")
-    response = requests.post(url="http://localhost:8000/login", json={"username": username, "password": password})
+    response = requests.post(url="http://localhost:8000/cli/login", json={"username": username, "password": password})
     print(response.status_code)
     if response.status_code == status.HTTP_200_OK:
         typer.echo("Login successful!")

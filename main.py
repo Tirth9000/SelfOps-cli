@@ -1,7 +1,12 @@
 import typer, time
 from commands import auth, control, monitor, operations
+from core import utils
 
 app = typer.Typer()
+
+
+#core info routes
+# app.add_command()(utils.selfops_info)
 
 
 # auth routes
@@ -25,7 +30,7 @@ app.command(name="logs")(monitor.logs)
 
 
 
-logo = """
+logo = r"""
    _____ ________    __________  ____  _____      
   / ___// ____/ /   / ____/ __ \/ __ \/ ___/      
   \__ \/ __/ / /   / /_  / / / / /_/ /\__ \       
@@ -38,6 +43,3 @@ def print_logo():
         print(line)
         time.sleep(0.05) 
 
-if __name__ == "__main__":
-    print_logo()
-    app()
