@@ -4,6 +4,7 @@ from rich.live import Live
 from rich.table import Table
 from rich.console import Console
 from .operations import get_table, get_cpu_percent
+from utils.middleware import login_required
 import yaml, json, time
 
 
@@ -16,6 +17,7 @@ except DockerException as e:
     exit(1)
 
 
+@login_required
 def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to initialize the monitor commands.")):
     console.print("[blue]Initializing monitor commands...[/blue]")
     if yml_path:
@@ -33,6 +35,7 @@ def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to ini
         typer.echo(f"Error: The file '{yaml_file_path}' does not exist.", err=True)
 
 
+@login_required
 def monitor():
     containers = client.containers.list(all=True)
     if len(containers) == 0:
@@ -70,6 +73,7 @@ def monitor():
             time.sleep(1)
 
 
+@login_required
 def status():
     console.print("[blue]Checking status of all containers...[/blue]")
     try:
@@ -94,10 +98,12 @@ def status():
 
 
 
+@login_required
 def health_check():
     print("Performing health check...")
 
 
+@login_required
 def logs(container_name_or_id: str = typer.Argument(None, help="Container name or ID to fetch logs."),
          live_log: bool = typer.Option(False, "--live", "-l", help="Fetch live logs.")):
     try:
@@ -130,3 +136,7 @@ def logs(container_name_or_id: str = typer.Argument(None, help="Container name o
         console.print(f"[bold red]Docker API error: {e}[/bold red]")
     except Exception as e:
         console.print(f"[bold red]An error occurred while fetching logs: {e}[/bold red]")
+
+        
+        
+        
