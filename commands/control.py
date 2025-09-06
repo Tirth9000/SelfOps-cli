@@ -3,6 +3,7 @@ from docker.errors import DockerException
 from rich.console import Console
 from rich.table import Table
 from rich.live import Live
+from utils.middleware import login_required
 import time
 
 console = Console()
@@ -14,6 +15,7 @@ except DockerException as e:
     exit(1)
 
 
+@login_required
 def start(container_names_or_ids: list[str] = typer.Argument(None, help="Container name or ID to start."),
           all_containers: bool = typer.Option(False, "--all", "-a", help="start all containers.")):
     try:
@@ -74,7 +76,7 @@ def start(container_names_or_ids: list[str] = typer.Argument(None, help="Contain
 
 
 
-# multiple container input remaining
+@login_required
 def stop(containers_name_or_id: list[str] = typer.Argument(None, help="Container name or ID to stop."),
          all_containers: bool = typer.Option(False, "--all", "-a", help="stop all the containers.")):
     try: 
@@ -126,6 +128,7 @@ def stop(containers_name_or_id: list[str] = typer.Argument(None, help="Container
 
 
 # multiple input remaining
+@login_required
 def restart(container_name_or_id: str = typer.Argument(None, help="Container name or ID to restart."),
             all_containers: bool = typer.Option(False, "--all", "-a", help="Restart all the containers.")):
     try:
@@ -183,7 +186,6 @@ def restart(container_name_or_id: str = typer.Argument(None, help="Container nam
         console.print(f"[bold red]Container '{container_name_or_id}' not found.[/bold red]")
         return
             
-
 
 
 

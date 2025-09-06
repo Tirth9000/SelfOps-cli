@@ -1,6 +1,7 @@
-import typer, time
+import typer, time, signal, atexit
 from commands import auth, control, monitor, operations
 from core import utils
+from utils.file_utility import cleanup_on_exit
 
 app = typer.Typer()
 
@@ -29,6 +30,9 @@ app.command(name="health-check")(monitor.health_check)
 app.command(name="logs")(monitor.logs)
 
 
+# atexit.register(cleanup_on_exit)  
+# signal.signal(signal.SIGINT, cleanup_on_exit) 
+# signal.signal(signal.SIGTERM, cleanup_on_exit)
 
 logo = r"""
    _____ ________    __________  ____  _____      

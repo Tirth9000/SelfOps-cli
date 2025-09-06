@@ -3,7 +3,7 @@ name = "selfops-cli"
 version = "0.2.0"
 
 [tool.setuptools]
-packages = ["core", "commands"]
+packages = ["core", "commands", "utils"]
 py-modules = ["main"]
 
 [project.scripts]
