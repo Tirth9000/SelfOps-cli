@@ -1,7 +1,6 @@
 import typer, time, signal, atexit
 from commands import auth, control, monitor, operations
 from core import utils
-from utils.file_utility import cleanup_on_exit
 
 app = typer.Typer()
 

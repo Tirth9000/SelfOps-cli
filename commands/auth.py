@@ -1,7 +1,7 @@
 import typer, requests
 from fastapi import status
 from decouple import config
-from utils.file_utility import create_and_write_file, read_value
+from utils.file_utility import *
 
 auth_app = typer.Typer()
 
@@ -16,7 +16,7 @@ def login():
         
         if response.status_code == status.HTTP_200_OK:
             typer.echo("Login successful!")
-            create_and_write_file("token", response.json().get("token"))  
+            set_value("token", response.json().get("token"))  
             
         else:
             typer.echo(f"Login failed: {response.json().get('message', 'Unknown Error')}", err=True)
@@ -29,6 +29,10 @@ def login():
 
 def logout():
     if typer.confirm("Are you sure you want to logout?"):
-        typer.echo("You have been logged out successfully.")
+        response = delete_value("token")
+        if response is not None:
+            typer.echo("Logged out successfully.")
+        else:
+            typer.echo("You are not logged in.", err=True)
     else:
         typer.echo("Logout cancelled.")

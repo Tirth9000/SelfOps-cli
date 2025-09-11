@@ -1,48 +1,60 @@
 import os, re, sys
 from decouple import config
-
-FILE_PATH = config("FILE_PATH")
-
-
-def read_content():
-    if os.path.exists(FILE_PATH):
-        with open(FILE_PATH, 'r') as f:
-            return f.read()
-    return ""
+import base64
+from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
-def create_and_write_file(key: str, value: str):
-    content = read_content()
 
-    with open(FILE_PATH, "w") as file:
-        pattern = rf'^{key}\s*=\s*["\'].*?["\']'
-        replacement = f'{key} = "{value}"'
-        if re.search(pattern, content, re.MULTILINE):
-            content = re.sub(pattern, replacement, content, flags=re.MULTILINE)
-        else:
-            if content and not content.endswith("\n"):
-                content += "\n"
-            content += replacement + "\n"
-        file.write(content)
+kdf = PBKDF2HMAC(
+    algorithm=hashes.SHA256(),
+    length=32,
+    salt=config("SALT").encode("utf-8"),
+    iterations=390000,
+)
+key = base64.urlsafe_b64encode(kdf.derive(config("PASSWORD").encode("utf-8")))
+fernet = Fernet(key)
 
 
-def read_value(key: str):
-    content = read_content()
-    pattern = rf'^{key}\s*=\s*["\'](.*?)["\']'
-    match = re.search(pattern, content, re.MULTILINE)
-    if match:
-        return match.group(1) 
-    return None
+APP_DIR = os.path.join(os.path.expanduser("~"), ".selfops")
+os.makedirs(APP_DIR, exist_ok=True)
 
 
-def delete_key(key: str):
-    content = read_content()
+CONFIG_FILE = os.path.join(APP_DIR, "selfops_config.enc")
 
-    pattern = rf'^{key}\s*=\s*["\'].*?["\']\n?'
-    new_content = re.sub(pattern, '', content, flags=re.MULTILINE)
-    with open(FILE_PATH, 'w') as file:
-        file.write(new_content)
 
-def cleanup_on_exit(*args):
-    delete_key("token")
-    return 
+
+def read_config_dict():
+    if not os.path.exists(CONFIG_FILE):
+        return {}
+    with open(CONFIG_FILE, "rb") as f:
+        encrypted = f.read()
+    decrypted = fernet.decrypt(encrypted).decode()
+    return dict(line.split("=", 1) for line in decrypted.splitlines() if "=" in line)
+
+
+def save_config_dict(config: dict):
+    text = "\n".join(f"{k}={v}" for k, v in config.items())
+    encrypted = fernet.encrypt(text.encode())
+    with open(CONFIG_FILE, "wb") as f:
+        f.write(encrypted)
+
+
+
+def set_value(key: str, value: str):
+    config = read_config_dict()
+    config[key.capitalize()] = value  # update or insert
+    save_config_dict(config)
+
+def get_value(key: str):
+    config = read_config_dict()
+    return config.get(key.capitalize(), None)
+
+def delete_value(key: str):
+    config = read_config_dict()
+    if key.capitalize() in config:
+        del config[key.capitalize()]
+        save_config_dict(config)
+    else:
+        return None
