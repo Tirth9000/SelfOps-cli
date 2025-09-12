@@ -1,5 +1,6 @@
-import os, re, sys
-from decouple import config
+import os
+# from decouple import config
+from core.service import config
 import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
@@ -44,7 +45,7 @@ def save_config_dict(config: dict):
 
 def set_value(key: str, value: str):
     config = read_config_dict()
-    config[key.capitalize()] = value  # update or insert
+    config[key.capitalize()] = value  
     save_config_dict(config)
 
 def get_value(key: str):
