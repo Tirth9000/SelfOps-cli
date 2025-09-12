@@ -1,5 +1,7 @@
 import typer, time
+from decouple import Config, RepositoryEnv
 
+config = Config(RepositoryEnv('example.env'))
 
 
 def selfops_info():
