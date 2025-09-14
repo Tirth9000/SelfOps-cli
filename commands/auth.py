@@ -1,7 +1,6 @@
 import typer, requests
 from fastapi import status
-# from decouple import config
-from core.service import config
+from decouple import config
 from utils.file_utility import *
 
 auth_app = typer.Typer()
