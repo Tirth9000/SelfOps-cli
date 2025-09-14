@@ -1,7 +1,5 @@
-import typer, time
-from decouple import Config, RepositoryEnv
+import typer, time, os
 
-config = Config(RepositoryEnv('/Users/tirthsharma/Downloads/Web-Dev/Projects/SelfOps/example.env'))
 
 
 def selfops_info():

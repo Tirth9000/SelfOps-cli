@@ -1,7 +1,6 @@
 import typer, jwt
 from functools import wraps
-# from decouple import config
-from core.service import config
+from decouple import config
 from utils.file_utility import *
 
 
