@@ -1,6 +1,6 @@
-import typer, time, os
-
+import typer, time
 from decouple import Config, RepositoryEnv
+
 config = Config(RepositoryEnv(r'C:\DISHA\7th sem\SelfOps\.env'))
 
 
