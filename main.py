@@ -1,6 +1,6 @@
 import typer, time, signal, atexit
 from commands import auth, control, monitor, operations
-from cli.core import service
+from core import service
 
 app = typer.Typer()
 

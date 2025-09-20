@@ -1,6 +1,5 @@
 import os
-# from decouple import config
-from core.service import config
+from decouple import config
 import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
