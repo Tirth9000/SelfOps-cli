@@ -1,0 +1,2 @@
+[console_scripts]
+selfops = main:app
