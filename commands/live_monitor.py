@@ -1,11 +1,10 @@
+import typer, docker
 import socketio, time
-from typer import Typer
 from decouple import config
-import docker
 from rich.console import Console
 from docker.errors import DockerException
 
-from operations import get_cpu_percent
+from .operations import get_cpu_percent
 
 console = Console()
 
@@ -17,7 +16,6 @@ except DockerException as e:
     exit(1)
 
 sio = socketio.Client()
-app = Typer()
 
 
 @sio.event
@@ -60,17 +58,20 @@ def get_container_stats_json():
             return {"error": str(e)}
     return data
 
+    
+    
 
-@app.command()
-def live_monitor():
+
+def live():
     try:
-        sio.connect(config("BACKEND_URL"))
+        sio.connect(config("BACKEND_URL"), socketio_path="ws")
         app_name = "selfops"
         sio.emit('join', {"username": "tirth", "room": app_name})
 
         while True:
             containers_data = get_container_stats_json()
             print(containers_data)
+            sio.emit("live_message", containers_data)
             time.sleep(3)
 
     except Exception as e:
@@ -78,5 +79,5 @@ def live_monitor():
 
 
 
-if __name__ == "__main__":
-    app()
+# if __name__ == "__main__":
+#     app()

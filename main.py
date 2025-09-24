@@ -1,5 +1,5 @@
 import typer, time, signal, atexit
-from commands import auth, control, monitor, operations
+from commands import auth, control, monitor, live_monitor
 from core import service
 
 app = typer.Typer()
@@ -8,6 +8,8 @@ app = typer.Typer()
 #core info routes
 # app.add_command()(utils.selfops_info)
 
+#live monitoring route
+app.command(name="live")(live_monitor.live)
 
 # auth routes
 app.command(name="login")(auth.login)

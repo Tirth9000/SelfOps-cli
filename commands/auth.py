@@ -5,7 +5,7 @@ from utils.file_utility import *
 
 auth_app = typer.Typer()
 
-url = config("URL")
+url = config("BACKEND_URL")
 
 # logic remaining 
 def login():
