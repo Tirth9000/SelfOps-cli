@@ -10,13 +10,14 @@ url = config("BACKEND_URL")
 # logic remaining 
 def login():
     try:
-        username = typer.prompt("Enter your username ")
+        email = typer.prompt("Enter your email ")
         password = typer.prompt("Enter your password ", hide_input=True)
-        response = requests.post(url=f"{url}/cli/login", json={"username": username, "password": password})
+        response = requests.post(url=f"{url}/cli/login", json={"email": email, "password": password})
         
         if response.status_code == status.HTTP_200_OK:
             typer.echo("Login successful!")
-            set_value("token", response.json().get("token"))  
+            token = response.json()["access_token"]
+            set_value("token", token)
             
         else:
             typer.echo(f"Login failed: {response.json().get('message', 'Unknown Error')}", err=True)
