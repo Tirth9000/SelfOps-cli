@@ -64,7 +64,8 @@ def get_container_stats_json():
 
 def live():
     try:
-        sio.connect(config("BACKEND_URL"), socketio_path="ws")
+        url = config('BACKEND_URL')
+        sio.connect(url, socketio_path="ws")
         app_name = "selfops"
         sio.emit('join', {"username": "tirth", "room": app_name})
 

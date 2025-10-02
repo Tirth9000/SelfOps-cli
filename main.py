@@ -1,12 +1,12 @@
 import typer, time, signal, atexit
 from commands import auth, control, monitor, live_monitor
-from core import service
+from core import service, info
 
 app = typer.Typer()
 
 
 #core info routes
-# app.add_command()(utils.selfops_info)
+app.callback(invoke_without_command=True)(info.main)
 
 #live monitoring route
 app.command(name="live")(live_monitor.live)

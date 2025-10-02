@@ -24,6 +24,21 @@ def get_cpu_percent(cpu_stats, precpu_stats):
     return 0.0
 
 
+def calculate_cpu_percent(stats):
+    cpu_delta = stats["cpu_stats"]["cpu_usage"]["total_usage"] - stats["precpu_stats"]["cpu_usage"]["total_usage"]
+    system_delta = stats["cpu_stats"]["system_cpu_usage"] - stats["precpu_stats"]["system_cpu_usage"]
+    if system_delta > 0.0 and cpu_delta > 0.0:
+        return (cpu_delta / system_delta) * len(stats["cpu_stats"]["cpu_usage"]["percpu_usage"]) * 100.0
+    return 0.0
+
+
+def get_network_io(stats):
+    if "networks" in stats:
+        rx = sum(net["rx_bytes"] for net in stats["networks"].values())
+        tx = sum(net["tx_bytes"] for net in stats["networks"].values())
+        return {"rx_bytes": rx, "tx_bytes": tx}
+    return {"rx_bytes": 0, "tx_bytes": 0}
+
 def get_table():
     table = Table(title="🚀 Docker Containers Live Monitor", expand=True)
     table.add_column("Container", style="bold cyan", justify="left")

@@ -3,7 +3,7 @@ from docker.errors import DockerException
 from rich.live import Live
 from rich.table import Table
 from rich.console import Console
-from .operations import get_table, get_cpu_percent
+from .operations import get_table, get_cpu_percent, get_network_io, calculate_cpu_percent
 from utils.middleware import login_required
 import yaml, json, time
 
@@ -18,21 +18,48 @@ except DockerException as e:
 
 
 @login_required
-def init(yml_path: str = typer.Argument(None, help="Path to the YAML file to initialize the monitor commands.")):
-    console.print("[blue]Initializing monitor commands...[/blue]")
-    if yml_path:
-        yaml_file_path = yml_path
-    yaml_file_path = "docker-compose.yml"
+def init(app_name: str = typer.Argument(None, help="provide the application name. ")):
+    if not app_name:
+        console.print("[bold red]Application name is required to initialize monitoring.[/bold red]")
+        return
+    console.print(f"[blue]Initializing monitoring for application: {app_name}...[/blue]")
 
-    try: 
-        with open(yaml_file_path, "r") as file:
-            yaml_data = yaml.safe_load(file)
-            
-        json_data = json.dumps(yaml_data, indent=4)
-        print(json_data)
-    
-    except FileNotFoundError:
-        typer.echo(f"Error: The file '{yaml_file_path}' does not exist.", err=True)
+    essentials = []
+    count = 1
+    for container in client.containers.list(all=True):
+        stats = container.stats(stream=False)  # snapshot (not continuous stream)
+
+
+
+        essentials = {
+            "id": container.short_id,
+            "name": container.name,
+            "image": container.image.tags[0] if container.image.tags else container.image.id,
+            "status": container.status,   # running, exited, etc.
+            "uptime": container.attrs["State"]["StartedAt"],  # ISO timestamp
+            "restart_count": container.attrs["RestartCount"],
+            "cpu_percent": get_cpu_percent(stats['cpu_stats'], stats['precpu_stats']),
+            "memory_usage": stats["memory_stats"]["usage"],
+            "memory_limit": stats["memory_stats"].get("limit"),
+            "network_io": get_network_io(stats),
+            "ports": container.attrs["NetworkSettings"]["Ports"],
+            "health": container.attrs["State"].get("Health", {}).get("Status", "N/A"),
+        }
+        # print(essentials)
+        print(container.attrs["HostConfig"]["PortBindings"])
+        ports = container.attrs["HostConfig"]["PortBindings"]
+        for c_port, bindings in ports.items():
+            for b in bindings:
+                host_ip = b.get("HostIp", "0.0.0.0") or "0.0.0.0"
+                host_port = b["HostPort"]
+                print(f"Container {c_port} -> Host {host_ip}:{host_port}")
+        # confirm = typer.confirm(f"Container {container.name}")
+        # if confirm:
+        #     print("confirmed !")
+        #     return 
+        # else:
+        #     console.print("[bold red]Initialization cancelled by user.[/bold red]")
+        #     return
 
 
 @login_required
