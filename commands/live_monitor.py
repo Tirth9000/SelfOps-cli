@@ -1,4 +1,4 @@
-import typer, docker
+import typer, docker, json
 import socketio, time
 from decouple import config
 from rich.console import Console
@@ -40,6 +40,7 @@ def get_container_stats_json():
             mem_usage = stats["memory_stats"].get("usage", 0)
             mem_limit = stats["memory_stats"].get("limit", 1)
             mem_display = f"{mem_usage // (1024*1024)}MB / {mem_limit // (1024*1024)}MB"
+            mem_percent = round((mem_usage / mem_limit) * 100, 2) 
 
             status = container.status
             health = container.attrs["State"].get("Health", {}).get("Status", "N/A")
@@ -49,7 +50,7 @@ def get_container_stats_json():
             container_data = {
                 "name": container.name,
                 "cpu": cpu,
-                "memory": mem_display,
+                "memory": mem_percent,
                 "status": status,
                 "health": health
             }
@@ -66,7 +67,7 @@ def live():
     try:
         url = config('BACKEND_URL')
         sio.connect(url, socketio_path="ws")
-        app_name = "selfops"
+        app_name = "room1"
         sio.emit('join', {"username": "tirth", "room": app_name})
 
         while True:
