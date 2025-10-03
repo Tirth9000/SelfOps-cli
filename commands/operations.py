@@ -18,7 +18,7 @@ def get_cpu_percent(cpu_stats, precpu_stats):
         system_delta = cpu_stats.get("system_cpu_usage", 0) - precpu_stats.get("system_cpu_usage", 0)
         cpu_count = cpu_stats.get("online_cpus", 1)
         if system_delta > 0.0 and cpu_delta > 0.0:
-            return round((cpu_delta / system_delta) * cpu_count * 100.0, 2)
+            return round((cpu_delta / system_delta) * 100, 2)
     except Exception:
         return 0.0
     return 0.0
