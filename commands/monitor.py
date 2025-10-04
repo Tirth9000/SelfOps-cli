@@ -25,11 +25,17 @@ def init(app_name: str = typer.Argument(None, help="provide the application name
     console.print(f"[blue]Initializing monitoring for application: {app_name}...[/blue]")
 
     essentials = []
-    count = 1
     for container in client.containers.list(all=True):
         stats = container.stats(stream=False)  # snapshot (not continuous stream)
 
-
+        port_binding = container.attrs["HostConfig"]["PortBindings"]
+        for port, binding in port_binding.items():
+            c_port = port
+            if binding:
+                host_port = binding[0].get("HostPort", "N/A")
+                print(host_port, c_port)
+            else:
+                host_port = "N/A"
 
         essentials = {
             "id": container.short_id,
@@ -42,24 +48,16 @@ def init(app_name: str = typer.Argument(None, help="provide the application name
             "memory_usage": stats["memory_stats"]["usage"],
             "memory_limit": stats["memory_stats"].get("limit"),
             "network_io": get_network_io(stats),
-            "ports": container.attrs["NetworkSettings"]["Ports"],
+            "ports": {"c_port": c_port, "host_port": host_port},
             "health": container.attrs["State"].get("Health", {}).get("Status", "N/A"),
         }
-        # print(essentials)
-        print(container.attrs["HostConfig"]["PortBindings"])
-        ports = container.attrs["HostConfig"]["PortBindings"]
-        for c_port, bindings in ports.items():
-            for b in bindings:
-                host_ip = b.get("HostIp", "0.0.0.0") or "0.0.0.0"
-                host_port = b["HostPort"]
-                print(f"Container {c_port} -> Host {host_ip}:{host_port}")
-        # confirm = typer.confirm(f"Container {container.name}")
-        # if confirm:
-        #     print("confirmed !")
-        #     return 
-        # else:
-        #     console.print("[bold red]Initialization cancelled by user.[/bold red]")
-        #     return
+        print(essentials)
+        confirm = typer.confirm(f"Container {container.name}")
+        if confirm:
+            print("confirmed !")
+        else:
+            console.print("[bold red]Initialization cancelled by user.[/bold red]")
+            return
 
 
 @login_required
