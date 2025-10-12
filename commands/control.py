@@ -15,7 +15,7 @@ except DockerException as e:
     exit(1)
 
 
-# @login_required
+@login_required
 def start(container_names_or_ids: list[str] = typer.Argument(None, help="Container name or ID to start."),
           all_containers: bool = typer.Option(False, "--all", "-a", help="start all containers.")):
     try:
@@ -76,7 +76,7 @@ def start(container_names_or_ids: list[str] = typer.Argument(None, help="Contain
 
 
 
-# @login_required
+@login_required
 def stop(containers_name_or_id: list[str] = typer.Argument(None, help="Container name or ID to stop."),
          all_containers: bool = typer.Option(False, "--all", "-a", help="stop all the containers.")):
     try: 

@@ -12,7 +12,11 @@ def login():
     try:
         email = typer.prompt("Enter your email ")
         password = typer.prompt("Enter your password ", hide_input=True)
-        response = requests.post(url=f"{url}/cli/login", json={"email": email, "password": password})
+        data = {
+            "email": email,
+            "password": password
+        }
+        response = requests.post(f"{url}/cli/login", json=data)
         
         if response.status_code == status.HTTP_200_OK:
             typer.echo("Login successful!")
