@@ -20,7 +20,7 @@ except DockerException as e:
     exit(1)
 
 
-# @login_required
+@login_required
 def init(app_name: str = typer.Argument(None, help="provide the application name. ")):
     if not app_name:
         console.print("[bold red]Application name is required to initialize monitoring.[/bold red]")
@@ -121,7 +121,7 @@ def monitor():
             time.sleep(1)
 
 
-# @login_required
+@login_required
 def status():
     console.print("[blue]Checking status of all containers...[/blue]")
     try:
