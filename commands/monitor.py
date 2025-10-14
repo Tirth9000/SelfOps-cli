@@ -5,10 +5,10 @@ from rich.table import Table
 from rich.console import Console
 from rich.prompt import Confirm
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from .operations import get_table, get_cpu_percent, get_network_io, calculate_cpu_percent
+from .operations import get_table, get_cpu_percent, get_container_stats
 from utils.middleware import login_required
 from decouple import config
-import yaml, json, time
+import time
 
 
 console = Console()
@@ -20,61 +20,73 @@ except DockerException as e:
     exit(1)
 
 
-@login_required
-def init(app_name: str = typer.Argument(None, help="provide the application name. ")):
+# @login_required
+def init(app_name: str = typer.Argument(..., help="provide the application name. "), 
+         all: bool = typer.Option(False, "--all", "-a", help="Register all containers or select specific ones."),
+         select: bool = typer.Option(False, "--select", "-s", help="Select specific containers to register.")):
+
+    essentials = []
     if not app_name:
         console.print("[bold red]Application name is required to initialize monitoring.[/bold red]")
         return
-    console.print(f"[bold]Initializing {app_name} registration...[/bold]")
 
-    essentials = []
-    for container in client.containers.list(all=True):
-        stats = container.stats(stream=False)  # snapshot (not continuous stream)
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("{task.description}"),
-            transient=True,  # hides spinner after done
-            console=console,
-        ) as progress:
-            progress.add_task(description=f"Registering {container.name}...", total=None)
-
-            time.sleep(3)
+    elif all:
+        console.print(f"[bold]Initializing {app_name} registration...[/bold]")
+        containers = client.containers.list(all=True)
+        if len(containers) == 0:
+            console.print("[bold red]No containers found to register.[/bold red]")
+            return
         
-            port_binding = container.attrs["HostConfig"]["PortBindings"]
-            for port, binding in port_binding.items():
-                c_port = port
-                if binding:
-                    host_port = binding[0].get("HostPort", "N/A")
-                else:
-                    host_port = "N/A"
+        completed = []
+        with Progress(SpinnerColumn(spinner_name="dots"), 
+                      TextColumn("[bold yellow]registering {task.description}"), 
+                      transient=True, 
+                      console=console
+            ) as progress:
+            for container in containers:
+                task = progress.add_task(f"{container.name}...", start=True)
+                container_stats = get_container_stats(container)
+                time.sleep(2)
+                # print(container_stats)
+                essentials.append(container_stats)
+                progress.remove_task(task)
 
-            container_details = {
-                "container_id": container.short_id,
-                "container_name": container.name,
-                "image": container.image.tags[0] if container.image.tags else container.image.id,
-                "status": container.status,   # running, exited, etc.
-                "uptime": container.attrs["State"]["StartedAt"],  # ISO timestamp
-                "restart_count": container.attrs["RestartCount"],
-                "cpu_percent": get_cpu_percent(stats['cpu_stats'], stats['precpu_stats']),
-                "memory_usage": stats["memory_stats"].get("usage", 0),
-                "memory_limit": stats["memory_stats"].get("limit", 0),
-                "network_io": get_network_io(stats),
-                "ports": {"c_port": c_port, "host_port": host_port},
-                "health": container.attrs["State"].get("Health", {}).get("Status", "N/A")
-            }
+                completed.append(f"[green]✓ {container.name} registered[/green]")
 
-        console.print(f"\nFound container: [bold]{container_details['container_name']}[/bold]")
-        color = "green" if container_details['status'] == "running" else "red"
-        console.print(f"  Status: [{color}]{container_details['status']}[/{color}]")
+                console.clear()
+                for c in completed:
+                    console.print(c)
+                time.sleep(0.4)
+        console.print("\n[bold green]All tasks completed successfully! 🎉[/bold green]\n")
 
-        if Confirm.ask(f"Do you want to register [bold]{container_details['container_name']}[/bold]?"):
-            console.print(f"[green]{container_details['container_name']} registered successfully![/green]\n")
-            essentials.append(container_details)
-        else:
-            console.print(f"[red]Skipped {container_details['container_name']}[/red]\n")
 
-        # api call
+    elif select:
+        console.print(f"[bold]Initializing {app_name} registration...[/bold]")
+        for container in client.containers.list(all=True):
+
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("{task.description}"),
+                transient=True,  # hides spinner after done
+                console=console,
+            ) as progress:
+                progress.add_task(description=f"Registering {container.name}...", total=None)
+
+                time.sleep(3)
+
+                container_details = get_container_stats(container)
+            
+
+            console.print(f"\nFound container: [bold]{container_details['container_name']}[/bold]")
+            color = "green" if container_details['status'] == "running" else "red"
+            console.print(f"  Status: [{color}]{container_details['status']}[/{color}]")
+
+            if Confirm.ask(f"Do you want to register [bold]{container_details['container_name']}[/bold]?"):
+                console.print(f"[green]{container_details['container_name']} registered successfully![/green]\n")
+                essentials.append(container_details)
+            else:
+                console.print(f"[red]Skipped {container_details['container_name']}[/red]\n")
+
     data = {"app_name": app_name, "containers": essentials}
     response = requests.post(f"{config('BACKEND_URL')}/cli/store_stats", json=data)
     print(response.status_code)
