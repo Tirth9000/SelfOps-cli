@@ -65,3 +65,38 @@ def get_table():
             table.add_row(container.name, "-", "-", "ERROR", str(e))
     return table
     
+
+def get_container_stats(container):
+    try:
+        stats = container.stats(stream=False)
+        port_binding = container.attrs["HostConfig"]["PortBindings"]
+        c_port = str
+        host_port = str
+        for port, binding in port_binding.items():
+            c_port = port
+            if binding:
+                host_port = binding[0].get("HostPort", "N/A")
+            else:
+                host_port = "N/A"
+
+        container_details = {
+            "container_id": container.short_id,
+            "container_name": container.name,
+            "image": container.image.tags[0] if container.image.tags else container.image.id,
+            "status": container.status,   # running, exited, etc.
+            "uptime": container.attrs["State"]["StartedAt"],  # ISO timestamp
+            "restart_count": container.attrs["RestartCount"],
+            "cpu_percent": get_cpu_percent(stats['cpu_stats'], stats['precpu_stats']),
+            "memory_usage": stats["memory_stats"].get("usage", 0),
+            "memory_limit": stats["memory_stats"].get("limit", 0),
+            "network_io": get_network_io(stats),
+            "ports": {"c_port": c_port, "host_port": host_port},
+            "health": container.attrs["State"].get("Health", {}).get("Status", "N/A")
+        }
+
+        return container_details
+    except Exception as e:
+        return {"error": str(e)}
+
+
+        
