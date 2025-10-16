@@ -70,8 +70,7 @@ def get_container_stats(container):
     try:
         stats = container.stats(stream=False)
         port_binding = container.attrs["HostConfig"]["PortBindings"]
-        c_port = str
-        host_port = str
+        c_port = host_port = ""
         for port, binding in port_binding.items():
             c_port = port
             if binding:
