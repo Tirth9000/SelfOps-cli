@@ -8,6 +8,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from .operations import get_table, get_cpu_percent, get_container_stats
 from utils.middleware import login_required
 from decouple import config
+from utils.file_utility import get_value
 import time
 
 
@@ -20,7 +21,7 @@ except DockerException as e:
     exit(1)
 
 
-# @login_required
+@login_required
 def init(app_name: str = typer.Argument(..., help="provide the application name. "), 
          all: bool = typer.Option(False, "--all", "-a", help="Register all containers or select specific ones."),
          select: bool = typer.Option(False, "--select", "-s", help="Select specific containers to register.")):
@@ -57,7 +58,6 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
                 for c in completed:
                     console.print(c)
                 time.sleep(0.4)
-        console.print("\n[bold green]All tasks completed successfully! 🎉[/bold green]\n")
 
 
     elif select:
@@ -87,10 +87,18 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
             else:
                 console.print(f"[red]Skipped {container_details['container_name']}[/red]\n")
 
-    data = {"app_name": app_name, "containers": essentials}
-    response = requests.post(f"{config('BACKEND_URL')}/cli/store_stats", json=data)
-    print(response.status_code)
-    print(response.json())
+    access_token = get_value("token")
+    data = {"app_name": str(app_name), "containers": essentials}
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    response = requests.post(f"{config('BACKEND_URL')}/cli/store_stats", json=data, headers=headers)
+
+    if response.status_code == 201:
+        console.print("\n[bold green]All containers registered successfully! 🎉[/bold green]\n")
+    else:
+        console.print(f"\n[bold red]Failed to register containers. Status code: {response.status_code}[/bold red]\n")
     return 
 
 
@@ -196,7 +204,3 @@ def logs(container_name_or_id: str = typer.Argument(None, help="Container name o
         console.print(f"[bold red]Docker API error: {e}[/bold red]")
     except Exception as e:
         console.print(f"[bold red]An error occurred while fetching logs: {e}[/bold red]")
-
-        
-        
-        
