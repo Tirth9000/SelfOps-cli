@@ -7,7 +7,7 @@ auth_app = typer.Typer()
 
 url = config("BACKEND_URL")
 
-# logic remaining 
+
 def login():
     try:
         email = typer.prompt("Enter your email ")
@@ -21,6 +21,7 @@ def login():
         if response.status_code == status.HTTP_200_OK:
             typer.echo("Login successful!")
             token = response.json()["access_token"]
+            print(token)
             set_value("token", token)
             
         else:
@@ -30,6 +31,7 @@ def login():
     except requests.ConnectionError:
         typer.echo("Error: Unable to connect to the authentication server.", err=True)
         raise typer.Exit(code=1)
+
 
 
 def logout():
