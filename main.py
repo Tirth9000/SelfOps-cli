@@ -1,12 +1,12 @@
-import typer, time, signal, atexit
+import typer
 from commands import auth, control, monitor, live_monitor
-from core import service, info
+from core import info
 
 app = typer.Typer()
 
 
 #core info routes
-app.callback(invoke_without_command=True)(info.main)
+app.callback(invoke_without_command=True)(info.intro)
 
 #live monitoring route
 app.command(name="live")(live_monitor.live)
@@ -29,22 +29,3 @@ app.command(name="monitor")(monitor.monitor)
 app.command(name="status")(monitor.status)
 app.command(name="health-check")(monitor.health_check)
 app.command(name="logs")(monitor.logs)
-
-
-# atexit.register(cleanup_on_exit)  
-# signal.signal(signal.SIGINT, cleanup_on_exit) 
-# signal.signal(signal.SIGTERM, cleanup_on_exit)
-
-logo = r"""
-   _____ ________    __________  ____  _____      
-  / ___// ____/ /   / ____/ __ \/ __ \/ ___/      
-  \__ \/ __/ / /   / /_  / / / / /_/ /\__ \       
- ___/ / /___/ /___/ __/ / /_/ / ____/___/ /       
-/____/_____/_____/_/    \____/_/    /____/   
-         🚀 SelfOps CLI
-"""
-def print_logo():
-    for line in logo.splitlines():
-        print(line)
-        time.sleep(0.05) 
-

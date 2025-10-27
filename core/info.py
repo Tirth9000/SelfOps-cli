@@ -1,6 +1,5 @@
 import typer, time
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.align import Align
@@ -48,12 +47,7 @@ def show_intro():
     console.print(table)
 
 
-def main(ctx: typer.Context):
+def intro(ctx: typer.Context):
     """SelfOps CLI entrypoint."""
     if ctx.invoked_subcommand is None:
         show_intro()
-
-
-
-# if __name__ == "__main__":
-#     app()
