@@ -22,6 +22,7 @@ def login():
             typer.echo("Login successful!")
             token = response.json()["access_token"]
             print(token)
+            set_value("username", response.json().get("username"))
             set_value("token", token)
             
         else:
