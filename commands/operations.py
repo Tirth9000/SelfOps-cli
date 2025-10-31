@@ -1,7 +1,8 @@
 from rich.table import Table
-import docker
+import docker, jwt
 from rich.console import Console
 from docker.errors import DockerException
+from decouple import config
 
 console = Console()
 
@@ -98,4 +99,42 @@ def get_container_stats(container):
         return {"error": str(e)}
 
 
-        
+def decode_access_token(token: str):
+    try:
+        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
+        return payload
+    except jwt.PyJWTError:
+        return None 
+
+def get_container_stats_json():
+    containers = client.containers.list(all=True)
+    
+    data = []
+
+    for container in containers:
+        try:
+            stats = container.stats(stream=False)
+            cpu = get_cpu_percent(stats["cpu_stats"], stats["precpu_stats"])
+            mem_usage = stats["memory_stats"].get("usage", 0)
+            mem_limit = stats["memory_stats"].get("limit", 1)
+            mem_display = f"{mem_usage // (1024*1024)}MB / {mem_limit // (1024*1024)}MB"
+            mem_percent = round((mem_usage / mem_limit) * 100, 2) 
+
+            status = container.status
+            health = container.attrs["State"].get("Health", {}).get("Status", "N/A")
+            icon = "🟢" if status == "running" else "🔴"
+            color = "green" if status == "running" else "red"
+
+            container_data = {
+                "name": container.name,
+                "cpu": cpu,
+                "memory": mem_percent,
+                "status": status,
+                "health": health
+            }
+            data.append(container_data)
+        except Exception as e:
+            return {"error": str(e)}
+    return data
+
+    

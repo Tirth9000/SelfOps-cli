@@ -8,7 +8,7 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from .operations import get_table, get_cpu_percent, get_container_stats
 from utils.middleware import login_required
 from decouple import config
-from utils.file_utility import get_value
+from utils.file_utility import get_value, set_value
 import time
 
 
@@ -96,6 +96,7 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
     response = requests.post(f"{config('BACKEND_URL')}/cli/store_stats", json=data, headers=headers)
 
     if response.status_code == 201:
+        set_value("app_id", response.json().get("app_id"))
         console.print("\n[bold green]All containers registered successfully! 🎉[/bold green]\n")
     else:
         console.print(f"\n[bold red]Failed to register containers. Status code: {response.status_code}[/bold red]\n")
