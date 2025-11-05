@@ -26,13 +26,12 @@ def login():
             set_value("token", token)
             
         else:
-            typer.echo(f"Login failed: {response.json().get('message', 'Unknown Error')}", err=True)
-            raise typer.Exit(code=1)
+            typer.echo(f"[red]Login failed![/red]", err=True)
+            return
 
     except requests.ConnectionError:
-        typer.echo("Error: Unable to connect to the authentication server.", err=True)
-        raise typer.Exit(code=1)
-
+        typer.echo("[red]Error: Unable to connect to the authentication server.[/red]", err=True)
+        return
 
 
 def logout():
