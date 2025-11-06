@@ -1,7 +1,6 @@
 <p align="center">
-  <img src="https://drive.google.com/uc?export=view&id=1yYCSwpERAxpDmL3oH_gC2tHTNYcR-eYT" alt="SelfOps Logo" width="200"/>
+  <img src="https://drive.google.com/uc?export=view&id=1j315k-0RZz6wOOmvSgu5M_k7T64rcYc5" alt="OwlOps Logo" width="500"/>
 </p>
-
 
 SelfOps is a unified CLI-based Docker monitoring tool that connects with your SelfOps web dashboard to provide real-time insights into containers running across multiple servers — from cloud to native.
 
