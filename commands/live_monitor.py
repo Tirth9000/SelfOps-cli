@@ -4,8 +4,8 @@ from decouple import config
 from rich.console import Console
 from docker.errors import DockerException
 from utils.file_utility import get_value
-from .operations import get_container_stats_json, decode_access_token
-
+from .operations import get_container_stats_json
+from utils.middleware import login_required
 console = Console()
 
 try:
@@ -29,7 +29,12 @@ def disconnect():
 
 
     
-def live():
+@login_required
+def live(app_name: str = typer.Argument(..., help="Name of the application to monitor required!")):
+    if not app_name:
+        console.print("[bold red]Application name is required to start live monitoring.[/bold red]")
+        return
+
     try:
         url = config('BACKEND_URL', default="https://selfops.onrender.com")
         sio.connect(url, socketio_path="ws")

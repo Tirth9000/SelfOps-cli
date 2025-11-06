@@ -1,9 +1,11 @@
 import typer, requests
 from fastapi import status
+from rich.console import Console
 from decouple import config
 from utils.file_utility import *
 
 auth_app = typer.Typer()
+console = Console()
 
 url = config("BACKEND_URL", default="https://selfops.onrender.com")
 
@@ -23,14 +25,14 @@ def login():
             username = response.json().get('username')
             set_value("username", username)
             set_value("token", token)
-            typer.echo(f"User: {username} Login successful!")
+            console.print(f"User: {username} Login successful!")
             
         else:
-            typer.echo(f"[red]Login failed![/red]", err=True)
+            console.print(f"[red]Login failed![/red]", err=True)
             return
 
     except requests.ConnectionError:
-        typer.echo("[red]Error: Unable to connect to the authentication server.[/red]", err=True)
+        console.print("[red]Error: Unable to connect to the authentication server.[/red]", err=True)
         return
 
 
@@ -39,8 +41,8 @@ def logout():
         response = delete_value("token")
         username = get_value("username")
         if response is not None:
-            typer.echo(f"User: {username} Logged out successfully.")
+            console.print(f"User: {username} Logged out successfully.")
         else:
-            typer.echo("You are not logged in.", err=True)
+            console.print("You are not logged in.", err=True)
     else:
-        typer.echo("Logout cancelled.")
+        console.print("Logout cancelled.")
