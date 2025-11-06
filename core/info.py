@@ -17,7 +17,7 @@ def show_intro():
         time.sleep(1)
     console.print("\n")
 
-    # Large colorful logo (centered)
+
     logo_text = Text("""
                      
                      
@@ -34,7 +34,6 @@ def show_intro():
         console.print(Align.center(line, style="bold dodger_blue3"))
         time.sleep(0.1)  # Slight delay for effect
 
-    # Table of initial commands (also centered)
     table = Table(title="✨ Quick Start Commands", title_style="bold cyan", show_lines=True)
     table.add_column("Command", style="bold green", justify="center")
     table.add_column("Description", style="yellow")
