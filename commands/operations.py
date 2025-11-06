@@ -110,12 +110,14 @@ def decode_access_token(token: str):
 
 
 
-def get_container_stats_json():
+def get_container_stats_json(listed_containers):
     containers = client.containers.list(all=True)
     
     data = []
 
     for container in containers:
+        if container.name not in listed_containers:
+            continue
         try:
             stats = container.stats(stream=False)
             cpu = get_cpu_percent(stats["cpu_stats"], stats["precpu_stats"])

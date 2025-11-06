@@ -22,12 +22,13 @@ except DockerException as e:
 
 backend_url = config("BACKEND_URL", default="https://selfops.onrender.com")
 
-@login_required
+# @login_required
 def init(app_name: str = typer.Argument(..., help="provide the application name. "), 
          all: bool = typer.Option(False, "--all", "-a", help="Register all containers or select specific ones."),
          select: bool = typer.Option(False, "--select", "-s", help="Select specific containers to register.")):
 
     essentials = []
+    selected_containers = []
     if not app_name:
         console.print("[bold red]Application name is required to initialize monitoring.[/bold red]")
         return
@@ -85,10 +86,15 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
             if Confirm.ask(f"Do you want to register [bold]{container_details['container_name']}[/bold]?"):
                 console.print(f"[green]{container_details['container_name']} registered successfully![/green]\n")
                 essentials.append(container_details)
+                selected_containers.append(container_details['container_name'])
             else:
                 console.print(f"[red]Skipped {container_details['container_name']}[/red]\n")
 
+    registered_apps = {str(app_name): selected_containers}
+    set_value("registered_apps", registered_apps)
+
     access_token = get_value("token")
+
     data = {"app_name": str(app_name), "containers": essentials}
     headers = {
         "Authorization": f"Bearer {access_token}",
