@@ -6,6 +6,8 @@ from decouple import config
 
 console = Console()
 
+secret_key = config('SECRET_KEY', default="supersecret")
+
 try:
     client = docker.from_env()
 except DockerException as e:
@@ -101,10 +103,12 @@ def get_container_stats(container):
 
 def decode_access_token(token: str):
     try:
-        payload = jwt.decode(token, config('SECRET_KEY'), algorithms=[config('ALGORITHM')])
+        payload = jwt.decode(token, secret_key, algorithms=[config('ALGORITHM')])
         return payload
     except jwt.PyJWTError:
         return None 
+
+
 
 def get_container_stats_json():
     containers = client.containers.list(all=True)

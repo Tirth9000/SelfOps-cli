@@ -12,7 +12,7 @@ def login_required(func):
             typer.echo("❌ You must login first: selfops login")
             return typer.Exit()
         try:
-            token = jwt.decode(token, config("SECRET_KEY"), algorithms=["HS256"])
+            token = jwt.decode(token, config("SECRET_KEY", defalut="supersecret"), algorithms=["HS256"])
         except jwt.InvalidTokenError:
             typer.echo("❌ Invalid token. Please login again.")
             raise typer.Exit()
