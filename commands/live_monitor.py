@@ -28,11 +28,10 @@ def disconnect():
     print("CLI Client Disconnected!")
 
 
-
     
 def live():
     try:
-        url = config('BACKEND_URL')
+        url = config('BACKEND_URL', default="https://selfops.onrender.com")
         sio.connect(url, socketio_path="ws")
         app_id = get_value("app_id")
         response = sio.call('join', {"room": "cli-" + app_id})
