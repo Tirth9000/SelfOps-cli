@@ -10,10 +10,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA256(),
     length=32,
-    salt=config("SALT").encode("utf-8"),
+    salt=config("SALT", default="selfops-salt").encode("utf-8"),
     iterations=390000,
 )
-key = base64.urlsafe_b64encode(kdf.derive(config("PASSWORD").encode("utf-8")))
+key = base64.urlsafe_b64encode(kdf.derive(config("PASSWORD", default="super-secret-password").encode("utf-8")))
 fernet = Fernet(key)
 
 

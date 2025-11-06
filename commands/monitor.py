@@ -20,6 +20,7 @@ except DockerException as e:
     console.print(f"Error details: {e}")
     exit(1)
 
+backend_url = config("BACKEND_URL", default="https://selfops.onrender.com")
 
 @login_required
 def init(app_name: str = typer.Argument(..., help="provide the application name. "), 
@@ -93,7 +94,7 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
         "Authorization": f"Bearer {access_token}",
         "Content-Type": "application/json"
     }
-    response = requests.post(f"{config('BACKEND_URL')}/cli/store_stats", json=data, headers=headers)
+    response = requests.post(f"{backend_url}/cli/store_stats", json=data, headers=headers)
 
     if response.status_code == 201:
         set_value("app_id", response.json().get("app_id"))
