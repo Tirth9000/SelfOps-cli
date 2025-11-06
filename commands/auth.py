@@ -19,11 +19,11 @@ def login():
         response = requests.post(f"{url}/cli/login", json=data)
         
         if response.status_code == status.HTTP_200_OK:
-            typer.echo("Login successful!")
             token = response.json()["access_token"]
-            print(token)
-            set_value("username", response.json().get("username"))
+            username = response.json().get('username')
+            set_value("username", username)
             set_value("token", token)
+            typer.echo(f"User: {username} Login successful!")
             
         else:
             typer.echo(f"[red]Login failed![/red]", err=True)
@@ -37,8 +37,9 @@ def login():
 def logout():
     if typer.confirm("Are you sure you want to logout?"):
         response = delete_value("token")
+        username = get_value("username")
         if response is not None:
-            typer.echo("Logged out successfully.")
+            typer.echo(f"User: {username} Logged out successfully.")
         else:
             typer.echo("You are not logged in.", err=True)
     else:
