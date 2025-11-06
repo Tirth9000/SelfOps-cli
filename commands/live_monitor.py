@@ -1,0 +1,55 @@
+import typer, docker, json
+import socketio, time
+from decouple import config
+from rich.console import Console
+from docker.errors import DockerException
+from utils.file_utility import get_value
+from .operations import get_container_stats_json, decode_access_token
+
+console = Console()
+
+try:
+    client = docker.from_env()
+except DockerException as e:
+    console.print("[bold red]❌ Docker daemon is not running. Please start Docker and try again.[/bold red]")
+    console.print(f"Error details: {e}")
+    exit(1)
+
+sio = socketio.Client()
+
+
+@sio.event
+def connect():
+    print("CLI Connected to the server")
+
+
+@sio.event()
+def disconnect():
+    print("CLI Client Disconnected!")
+
+
+
+    
+def live():
+    try:
+        url = config('BACKEND_URL')
+        sio.connect(url, socketio_path="ws")
+        app_id = get_value("app_id")
+        response = sio.call('join', {"room": "cli-" + app_id})
+
+        if response["status_code"] == 409:
+            console.print("[bold yellow]⚠️ Live monitoring is already running.[/bold yellow]")
+            return
+
+        while True:
+            containers_data = get_container_stats_json()
+            sio.emit("live_message", containers_data)
+            time.sleep(3)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+
+# if __name__ == "__main__":
+#     app()
