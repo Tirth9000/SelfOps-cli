@@ -49,7 +49,7 @@ def live(app_name: str = typer.Argument(help="Name of the application to monitor
         registered_apps = ast.literal_eval(get_value("registered_apps"))
         container_list = registered_apps.get(app_name, None)
 
-        if container_list is None:
+        if container_list is None or len(container_list) == 0:
             console.print(f"[bold red]❌ No registered containers found for application '{app_name}'. Please initialize first.[/bold red]")
             return
 

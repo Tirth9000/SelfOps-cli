@@ -28,11 +28,11 @@ def login():
             console.print(f"User: {username} Login successful!")
             
         else:
-            console.print(f"[red]Login failed![/red]", err=True)
+            console.print(f"[red]Login failed![/red]")
             return
 
     except requests.ConnectionError:
-        console.print("[red]Error: Unable to connect to the authentication server.[/red]", err=True)
+        console.print("[red]Error: Unable to connect to the authentication server.[/red]")
         return
 
 

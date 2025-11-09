@@ -50,8 +50,8 @@ def init(app_name: str = typer.Argument(..., help="provide the application name.
                 task = progress.add_task(f"{container.name}...", start=True)
                 container_stats = get_container_stats(container)
                 time.sleep(2)
-                # print(container_stats)
                 essentials.append(container_stats)
+                selected_containers.append(container.name)
                 progress.remove_task(task)
 
                 completed.append(f"[green]✓ {container.name} registered[/green]")
